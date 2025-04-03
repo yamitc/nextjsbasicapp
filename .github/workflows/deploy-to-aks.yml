@@ -114,5 +114,3 @@ jobs:
         run: |
           echo "Listing running pods:"
           kubectl get pods -l app=nextjs-app
-
-
