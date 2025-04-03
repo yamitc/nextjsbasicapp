@@ -51,6 +51,15 @@ jobs:
       - name: Build the project
         run: |
           npm run build
+
+      # Step 7: Set up Docker
+      - name: Set up Docker
+        uses: actions/setup-docker@v2
+
+      # Step 8: Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t your-image-name:latest .
       
       # Step 3: Log in to Azure using the Azure Login action (with creds input)
       - name: Log in to Azure
