@@ -37,6 +37,11 @@ jobs:
         run: |
           npm install
 
+      # Step 5: Run npm audit fix to automatically fix vulnerabilities (low and moderate)
+      - name: Run npm audit fix
+        run: |
+          npm audit fix
+
       # Step 5: Run npm audit to check for vulnerabilities (only high or critical)
       - name: Run npm audit
         run: |
