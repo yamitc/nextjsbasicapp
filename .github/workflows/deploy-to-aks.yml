@@ -64,6 +64,13 @@ jobs:
         run: |
           npm run build
 
+      - name: GitHub CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - uses: github/codeql-action/analyze@v2
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
