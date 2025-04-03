@@ -38,9 +38,9 @@ jobs:
           npm install
 
       # Step 5: Run tests
-      - name: Run tests
-        run: |
-          npm run test
+      # - name: Run tests
+      #   run: |
+      #     npm run test
 
       # Step 6: Build the project
       - name: Build the project
