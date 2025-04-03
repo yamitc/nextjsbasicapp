@@ -28,7 +28,7 @@ spec:
 
       containers:
         - name: app-runtime
-          image: node:16-alpine
+          image: node:22-alpine
           workingDir: /app
           command: ["npm", "run", "start"]
           volumeMounts:
