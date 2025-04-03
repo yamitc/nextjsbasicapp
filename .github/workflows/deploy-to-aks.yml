@@ -51,3 +51,11 @@ jobs:
       - name: Build the project
         run: |
           npm run build
+      
+      # Step 3: Log in to Azure using the Azure Login action
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
