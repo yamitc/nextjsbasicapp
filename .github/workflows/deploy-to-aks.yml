@@ -89,8 +89,30 @@ jobs:
       #     docker build -t your-image-name:latest .
       
       # Step 3: Log in to Azure using the Azure Login action (with creds input)
-      # - name: Log in to Azure
-      #   uses: azure/login@v1
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Prepare Kubernetes deployment
+        run: |
+          sed "s/__IMAGE_TAG__/${{ steps.version.outputs.tag }}/g" k8s/deployment.yaml.in > k8s/deployment.yaml
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials --resource-group my-aks-rg --name myakscluster --overwrite-existing
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+
+      - name: Wait for pod to be ready
+        run: |
+          kubectl wait --for=condition=Ready pod -l app=nextjs-app --timeout=90s
+
+      - name: Verify pod status
+        run: |
+          echo "Listing running pods:"
+          kubectl get pods -l app=nextjs-app
+
 

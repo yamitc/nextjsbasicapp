@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextjs-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextjs-app
+  template:
+    metadata:
+      labels:
+        app: nextjs-app
+    spec:
+      volumes:
+        - name: work-volume
+          emptyDir: {}
+
+      initContainers:
+        - name: copy-code
+          image: nextjsbasicapp.azurecr.io/nextjsbasicapp-image:__IMAGE_TAG__
+          command: ["/bin/sh", "-c"]
+          args:
+            - cp -r /app/* /work;
+          volumeMounts:
+            - name: work-volume
+              mountPath: /work
+
+      containers:
+        - name: app-runtime
+          image: node:16-alpine
+          workingDir: /app
+          command: ["npm", "run", "start"]
+          volumeMounts:
+            - name: work-volume
+              mountPath: /app
+          ports:
+            - containerPort: 3000
