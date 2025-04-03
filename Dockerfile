@@ -6,5 +6,5 @@ FROM alpine:latest
 
 # Copy only the necessary application files to the container
 RUN ls -alt
-COPY . .
+COPY . /app/
 
