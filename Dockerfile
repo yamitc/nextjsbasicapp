@@ -2,9 +2,9 @@
 FROM alpine:latest
 
 # Set the working directory inside the container
-WORKDIR /app
+# WORKDIR /app
 
 # Copy only the necessary application files to the container
 RUN ls -alt
-COPY .next .next
+COPY . .
 
