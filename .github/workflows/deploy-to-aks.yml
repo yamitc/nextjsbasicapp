@@ -13,6 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Get latest tag and bump patch version
+        id: version
+        run: |
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Latest tag: $latest_tag"
+          IFS='.' read -r major minor patch <<< "${latest_tag#v}"
+          new_patch=$((patch + 1))
+          new_tag="v${major}.${minor}.${new_patch}"
+          echo "New tag: $new_tag"
+          echo "tag=$new_tag" >> $GITHUB_OUTPUT
+
       # Step 2: Set up Azure CLI (without specifying a version)
       # Step 2: Install Azure CLI
       # - name: Install Azure CLI
@@ -67,8 +78,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: nextjsbasicapp.azurecr.io/nextjsbasicapp-image:latest
-
+          tags: |
+            nextjsbasicapp.azurecr.io/nextjsbasicapp-image:latest
+            nextjsbasicapp.azurecr.io/nextjsbasicapp-image:${{ steps.version.outputs.tag }}
 
       # Step 8: Build the Docker image
       # - name: Build Docker image
