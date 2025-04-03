@@ -5,5 +5,5 @@ FROM alpine:latest
 WORKDIR /app
 
 # Copy only the necessary application files to the container
-COPY . .
+COPY .next .next
 
