@@ -37,10 +37,10 @@ jobs:
         run: |
           npm install
 
-      # Step 5: Run tests
-      # - name: Run tests
-      #   run: |
-      #     npm run test
+      # Step 5: Run npm audit to check for vulnerabilities (only high or critical)
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=high
 
       # Step 6: Build the project
       - name: Build the project
