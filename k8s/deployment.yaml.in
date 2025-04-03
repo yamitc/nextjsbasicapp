@@ -21,7 +21,7 @@ spec:
           image: nextjsbasicapp.azurecr.io/nextjsbasicapp-image:__IMAGE_TAG__
           command: ["/bin/sh", "-c"]
           args:
-	  - cp -r /* /work && cp -r /.next /work/.next;
+            - cp -r /* /work && cp -r /.next /work/.next;
           volumeMounts:
             - name: work-volume
               mountPath: /work
