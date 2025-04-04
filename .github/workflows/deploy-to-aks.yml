@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: # 👈 Enable manual trigger from GitHub UI
 
 concurrency:
   group: deployment
@@ -12,16 +13,16 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout the repository code
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Get latest tag and bump patch version
         id: version
         run: |
           git fetch --tags
-          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "Latest tag: $latest_tag"
           IFS='.' read -r major minor patch <<< "${latest_tag#v}"
           new_patch=$((patch + 1))
@@ -29,51 +30,31 @@ jobs:
           echo "New tag: $new_tag"
           echo "tag=$new_tag" >> $GITHUB_OUTPUT
 
-      # Step 2: Set up Azure CLI (without specifying a version)
-      # Step 2: Install Azure CLI
-      # - name: Install Azure CLI
-      #   run: |
-      #     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-      #     sudo apt-get update
-      #     sudo apt-get install azure-cli
-
-      # Step 2: Set up Node.js (If not already setup globally in the runner)
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '22'
 
-      # Step 3: Log in to Azure using Service Principal credentials
-      # - name: Log in to Azure
-      #   run: |
-      #     az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
-
-      # Step 4: Install Node.js dependencies
       - name: Install dependencies
-        run: |
-          npm install
+        run: npm install
 
-      # Step 5: Run npm audit fix to automatically fix vulnerabilities (low and moderate)
       - name: Run npm audit fix
-        run: |
-          npm audit fix
+        run: npm audit fix
 
-      # Step 5: Run npm audit to check for vulnerabilities (only high or critical)
-      - name: Run npm audit
-        run: |
-          npm audit --audit-level=high
+      - name: Run npm audit (high or critical)
+        run: npm audit --audit-level=high
 
-      # Step 6: Build the project
       - name: Build the project
-        run: |
-          npm run build
+        run: npm run build
 
-      - name: GitHub CodeQL Analysis
-        uses: github/codeql-action/init@v2
+      # ✅ Updated CodeQL Action to v3
+      - name: GitHub CodeQL Analysis Init
+        uses: github/codeql-action/init@v3
         with:
           languages: javascript
 
-      - uses: github/codeql-action/analyze@v3
+      - name: GitHub CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -94,28 +75,13 @@ jobs:
             nextjsbasicapp.azurecr.io/nextjsbasicapp-image:latest
             nextjsbasicapp.azurecr.io/nextjsbasicapp-image:${{ steps.version.outputs.tag }}
 
-      # Step 8: Build the Docker image
-      # - name: Build Docker image
-      #   run: |
-      #     docker build -t your-image-name:latest .
-      
-      # Step 3: Log in to Azure using the Azure Login action (with creds input)
       - name: Log in to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Prepare Kubernetes deployment
-        run: |
-          sed "s/__IMAGE_TAG__/${{ steps.version.outputs.tag }}/g" k8s/deployment.yaml.in > k8s/deployment.yaml
-
       - name: Get AKS credentials
-        run: |
-          az aks get-credentials --resource-group my-aks-rg --name myakscluster --overwrite-existing
-
-      # - name: Apply Kubernetes manifests
-      #   run: |
-      #     kubectl apply -f k8s/deployment.yaml
+        run: az aks get-credentials --resource-group my-aks-rg --name myakscluster --overwrite-existing
 
       - name: Set up Helm
         uses: azure/setup-helm@v1
@@ -125,15 +91,13 @@ jobs:
 
       - name: Helm upgrade --install
         run: |
-          helm upgrade --install nextjsbasic ./helm \
+          helm upgrade --install nextjsbasicapp ./helm \
             --set image.tag=${{ steps.version.outputs.tag }} \
             --namespace default
 
       - name: Wait for pod to be ready
         run: |
-          kubectl wait --for=condition=Ready pod -l app=nextjs-app --timeout=90s
+          kubectl wait --for=condition=Ready pod -l app=nextjsbasicapp --timeout=90s
 
       - name: Verify pod status
-        run: |
-          echo "Listing running pods:"
-          kubectl get pods -l app=nextjs-app
+        run: kubectl get pods -l app=nextjsbasicapp
