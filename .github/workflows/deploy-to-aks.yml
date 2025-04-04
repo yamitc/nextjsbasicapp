@@ -105,12 +105,17 @@ jobs:
       - name: Lint Helm chart
         run: helm lint helm
 
+      - name: Update Chart version to match tag
+        run: |
+          version=${{ steps.version.outputs.tag }}
+          sed -i "s/^version:.*/version: ${version#v}/" helm/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${version#v}\"/" helm/Chart.yaml
+
       - name: Helm upgrade --install
         run: |
           helm upgrade --install nextjsbasic ./helm \
             --namespace default \
             --set image.tag=${{ steps.version.outputs.tag }} \
-            --set appVersion=${{ steps.version.outputs.tag }} \
             --atomic --force
 
       - name: Wait for pod to be ready
