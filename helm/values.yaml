@@ -39,8 +39,7 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: nginx
   hosts:
-    - host: nextjsbasicapp.51.8.33.223.nip.io
-      paths:
+    - paths:
         - path: /
           pathType: Prefix
   tls:
