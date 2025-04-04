@@ -93,7 +93,8 @@ jobs:
         run: |
           helm upgrade --install nextjsbasicapp ./helm \
             --set image.tag=${{ steps.version.outputs.tag }} \
-            --namespace default
+            --namespace default \
+            --atomic --force
 
       - name: Wait for pod to be ready
         run: |
