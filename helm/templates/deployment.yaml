@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-app
+          {{- include "helm.selectorLabels" . | nindent 8 }}
     spec:
       volumes:
         - name: {{ .Values.deployment.volume.name }}

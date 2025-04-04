@@ -125,7 +125,7 @@ jobs:
 
       - name: Helm upgrade --install
         run: |
-          helm upgrade --install nextjs-app ./helm \
+          helm upgrade --install nextjsbasic ./helm \
             --set image.tag=${{ steps.version.outputs.tag }} \
             --namespace default
 
