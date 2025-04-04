@@ -109,7 +109,6 @@ jobs:
         run: |
           version=${{ steps.version.outputs.tag }}
           sed -i "s/^version:.*/version: ${version#v}/" helm/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"${version#v}\"/" helm/Chart.yaml
 
       - name: Helm upgrade --install
         run: |
