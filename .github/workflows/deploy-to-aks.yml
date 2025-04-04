@@ -110,6 +110,7 @@ jobs:
           helm upgrade --install nextjsbasic ./helm \
             --namespace default \
             --set image.tag=${{ steps.version.outputs.tag }} \
+            --set appVersion=${{ steps.version.outputs.tag }} \
             --atomic --force
 
       - name: Wait for pod to be ready
