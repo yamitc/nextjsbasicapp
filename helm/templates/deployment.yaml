@@ -10,7 +10,8 @@ spec:
   template:
     metadata:
       labels:
-          {{- include "helm.selectorLabels" . | nindent 8 }}
+        app: {{ .Release.Name }}-app
+        {{- include "helm.selectorLabels" . | nindent 8 }}
     spec:
       volumes:
         - name: {{ .Values.deployment.volume.name }}
@@ -36,4 +37,3 @@ spec:
               mountPath: /app
           ports:
             - containerPort: {{ .Values.deployment.runtimeContainer.port }}
-
