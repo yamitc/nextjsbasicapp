@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: write # Required for pushing tags
+  security-events: write  # <-- needed for CodeQL to upload results
 
 jobs:
   deploy:
