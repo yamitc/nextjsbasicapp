@@ -44,6 +44,9 @@ jobs:
       - name: Run npm audit (high or critical)
         run: npm audit --audit-level=high
 
+      - name: Run TypeScript Linter
+        run: npm run lint
+
       - name: Build the project
         run: npm run build
 
