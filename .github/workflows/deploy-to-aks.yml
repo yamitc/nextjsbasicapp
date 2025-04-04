@@ -10,6 +10,9 @@ concurrency:
   group: deployment
   cancel-in-progress: true
 
+permissions:
+  contents: write # Required for pushing tags
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -29,6 +32,13 @@ jobs:
           new_tag="v${major}.${minor}.${new_patch}"
           echo "New tag: $new_tag"
           echo "tag=$new_tag" >> $GITHUB_OUTPUT
+
+      - name: Push new tag to GitHub
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
