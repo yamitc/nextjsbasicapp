@@ -44,7 +44,7 @@ ingress:
           pathType: Prefix
   tls:
     - hosts:
-        - nextjsbasicapp.51.8.33.223.nip.io
+        - nextjsbasicapp.128.203.114.45.nip.io
       secretName: nextjsbasicapp-selfsigned-tls
 
 
