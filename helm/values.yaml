@@ -2,7 +2,7 @@ deployment:
   replicaCount: 1
   image:
     repository: nextjsbasicapp.azurecr.io/nextjsbasicapp-image
-    tag: latest
+    tag: @version@
   initContainer:
     name: copy-code
     command: ["/bin/sh", "-c"]
