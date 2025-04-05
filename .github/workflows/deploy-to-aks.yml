@@ -26,11 +26,14 @@ jobs:
         id: version
         run: |
           git fetch --tags
-          latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-          echo "Latest tag: $latest_tag"
-          IFS='.' read -r major minor patch <<< "${latest_tag#v}"
-          new_patch=$((patch + 1))
-          new_tag="v${major}.${minor}.${new_patch}"
+          latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          if [[ -z "$latest_tag" ]]; then
+            new_tag="0.0.1"
+          else
+            IFS='.' read -r major minor patch <<< "$latest_tag"
+            new_patch=$((patch + 1))
+            new_tag="${major}.${minor}.${new_patch}"
+          fi
           echo "New tag: $new_tag"
           echo "tag=$new_tag" >> $GITHUB_OUTPUT
 
@@ -91,8 +94,8 @@ jobs:
       - name: Inject version into Chart.yaml and values.yaml
         run: |
           version=${{ steps.version.outputs.tag }}
-          sed -i "s/@version@/${version#v}/g" helm/Chart.yaml
-          sed -i "s/@version@/${version#v}/g" helm/values.yaml
+          sed -i "s/@version@/${version}/g" helm/Chart.yaml
+          sed -i "s/@version@/${version}/g" helm/values.yaml
 
       - name: Package Helm chart
         run: helm package helm --destination packaged
@@ -105,7 +108,7 @@ jobs:
             --username ${{ secrets.ACR_USERNAME }} \
             --password ${{ secrets.ACR_PASSWORD }}
 
-          helm chart save packaged/helm-${{ steps.version.outputs.tag#v }}.tgz oci://nextjsbasicapp.azurecr.io/helm
+          helm chart save packaged/helm-${{ steps.version.outputs.tag }}.tgz oci://nextjsbasicapp.azurecr.io/helm
           helm chart push oci://nextjsbasicapp.azurecr.io/helm/helm:${{ steps.version.outputs.tag }}
 
       - name: Log in to Azure
