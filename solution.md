@@ -4,9 +4,36 @@ This project demonstrates how to securely build, package, scan, and deploy a **N
 
 ---
 
+## 📌 Prerequisites
+
+Before running the pipeline, ensure you have:
+- An Azure subscription
+- Azure CLI installed or access to Azure Cloud Shell
+- A GitHub repository with the necessary secrets configured
+
+To securely deploy to Azure from GitHub Actions, the following secrets are configured in the repository under  
+**Settings → Secrets and variables → Actions**:
+
+- **`AZURE_CREDENTIALS`**  
+  A JSON object containing credentials for a service principal with access to Azure subscription.  
+  Used by the `azure/login@v1` action to authenticate to Azure.  
+  It includes:
+  - `clientId`
+  - `clientSecret`
+  - `subscriptionId`
+  - `tenantId`
+
+- **`ACR_USERNAME`**  
+  The username for Azure Container Registry (ACR).  
+  This is typically the name of ACR instance (e.g., `nextjsbasicapp`).
+
+- **`ACR_PASSWORD`**  
+  The password (secret) for the ACR.
+
+
 ## 🚀 CI/CD Pipeline Overview
 
-Our pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or manually via GitHub UI. It includes the following steps:
+The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or manually via GitHub UI. It includes the following steps:
 
 ### ✅ Steps Explained
 
@@ -48,50 +75,39 @@ Our pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
 
 ---
 
-## ⚠️ Known Security Vulnerabilities in Next.js
+## 🌐 Exposing the Application with Ingress and SSL
 
-As part of our DevSecOps pipeline, we monitored known vulnerabilities affecting the Next.js framework. Below is a summary of notable issues identified in recent advisories:
+The application is exposed via an Ingress resource that provisions an external **public IP** with support for both HTTP and HTTPS.
 
-### 1. **Server-Side Request Forgery (SSRF) in Server Actions**
-- **Advisory:** [GHSA-fr5h-rqp8-mj6g](https://github.com/advisories/GHSA-fr5h-rqp8-mj6g)
-- **Impact:** May expose internal services or sensitive data.
-- **Resolution:** Upgrade Next.js to a patched version.
+### ✅ Ingress Overview
 
-### 2. **Cache Poisoning Vulnerability**
-- **Advisory:** [GHSA-gp8f-8m3g-qvj9](https://github.com/advisories/GHSA-gp8f-8m3g-qvj9)
-- **Impact:** Could show incorrect data or outdated pages.
-- **Resolution:** Upgrade Next.js and review cache headers.
+After deployment, the Azure Load Balancer public IP acn be obtained with
 
-### 3. **Denial of Service in Image Optimization**
-- **Advisory:** [GHSA-g77x-44xx-532m](https://github.com/advisories/GHSA-g77x-44xx-532m)
-- **Impact:** Application crash from malformed images.
-- **Resolution:** Update Next.js and sanitize image inputs.
+```bash
+kubectl get ingress
+```
 
-### 4. **Authorization Bypass in Middleware**
-- **Advisory:** [GHSA-f82v-jwr5-mffw](https://github.com/advisories/GHSA-f82v-jwr5-mffw)
-- **Impact:** Allows unauthorized access to protected routes.
-- **Resolution:** Upgrade and harden middleware logic.
-
-### 5. **Next.js Authorization Bypass**
-- **Advisory:** [GHSA-7gfc-8cq8-jh5f](https://github.com/advisories/GHSA-7gfc-8cq8-jh5f)
-- **Impact:** Bypass access control logic.
-- **Resolution:** Use latest patched release.
-
-### 6. **DoS with Server Actions**
-- **Advisory:** [GHSA-7m27-7ghc-44w9](https://github.com/advisories/GHSA-7m27-7ghc-44w9)
-- **Impact:** Resource exhaustion or application hang.
-- **Resolution:** Apply guards against recursive logic.
+The output includes:
+- `ADDRESS`: `128.203.114.45` — Azure Load Balancer public IP
+- `PORTS`: Supports both HTTP (80) and HTTPS (443)
 
 ---
 
-## ✅ Mitigation and Monitoring
+### 🌍 Accessing the App
 
-- ✅ Dependencies scanned automatically via `npm audit`.
-- ✅ Static analysis performed by GitHub CodeQL.
-- ✅ Helm and Docker images tagged and validated.
-- ✅ All vulnerabilities tracked and addressed proactively.
+The app is publicly available via the IP address:
+
+```
+https://128.203.114.45
+```
+
+Or, more conveniently, via a dynamic DNS domain using [nip.io](https://nip.io):
+
+```
+https://nextjsbasicapp.128.203.114.45.nip.io/
+```
+
+This works automatically because `*.nip.io` resolves the domain to the IP embedded in it (`128.203.114.45`).  
+No DNS configuration is required — great for demos and test environments.
 
 ---
-
-For questions or improvements, feel free to open a pull request or contact the maintainer.
-
