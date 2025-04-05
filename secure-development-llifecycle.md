@@ -1,6 +1,6 @@
-# Secure Development Lifecycle – Contoso
+# Secure Development Lifecycle
 
-This diagram and explanation describe a secure development lifecycle customized for Contoso, using the current toolchain: Bitbucket, Jenkins, JFrog Artifactory, ArgoCD, SonarQube, Black Duck, Twistlock, Jest, and Playwright.
+This document describes a secure development lifecycle customized for Contoso, using the current toolchain: Bitbucket, Jenkins, JFrog Artifactory, ArgoCD, SonarQube, Black Duck, Twistlock, Jest, and Playwright.
 
 ---
 
@@ -8,131 +8,107 @@ This diagram and explanation describe a secure development lifecycle customized 
 
 ![Secure Development Lifecycle](./secure-dev-lifecycle.png)
 
-> (Save the image as `secure-dev-lifecycle.png` in the same folder as this Markdown file for proper PDF export.)
+---
+
+## 🔐 Lifecycle Explanation (Stage by Stage)
+
+### 🔹 Plan
+- Understand business goals and user needs
+- Identify data sensitivity, compliance requirements, and risk exposure
+- Define DevSecOps strategy early (CI/CD flow, access control, secrets handling)
 
 ---
 
-## 🔐 Lifecycle Explanation (Step-by-Step)
+### 🔹 Design
+- Define branching and PR strategy (e.g., `feature` → `dev` → `release`)
+- Plan GitOps workflow for ArgoCD-based delivery
+- Configure secure developer access (VPN + corporate proxy)
+- Set up project structure and CI/CD trigger conditions (webhooks, PR rules)
 
-### 1. Developer Workstation
-- Developers write code locally using secure tools and workflows.
+---
+
+### 🔹 Develop
 - Workstation access to internal resources is controlled via **VPN** and **corporate proxy** — ensuring secure connectivity to both company systems and the internet.
-- Use tools like **Trunk Code Quality** to run linters, formatters, and security checks automatically before code is committed.
-- Optional pre-commit hooks such as **GitLeaks** help prevent accidental exposure of secrets.
-
----
-
-### 2. Git-based Source Code Platform (e.g., Bitbucket, GitHub, GitLab)
 - Developers push their changes to a central Git repository and open a **Pull Request (PR)** for review.
+- Webhooks notify the CI system (e.g., Jenkins) to start a pipeline on push or PR merge.
 - PRs must meet strict quality gates before they can be merged:
   - ✅ At least one team member must approve the changes
   - ✅ The automated build and tests must pass (triggered by the CI system)
-- Webhooks notify the CI/CD system (e.g., Jenkins) to start a pipeline on push or PR merge.
-- Important branches like `dev` and `release` are **protected**:
-  - ✅ Pull requests are required to make changes
-  - ✅ Direct commits are blocked
-  - 🚫 Force-push (rewrite history) and branch deletion are blocked
+- Use tools like **Trunk Code Quality** to run linters, formatters, and security checks automatically before code is committed.
+- Pre-commit hooks such as **GitLeaks** help prevent accidental exposure of secrets.
+- 🚫 Force-push (rewrite history) and branch deletion are blocked
 
 ---
 
-### 3. Continuous Integration & Build Platform (e.g., Jenkins, GitHub Actions, GitLab CI)
+### 🔹 Test
 
-- The CI pipeline runs automatically on **any branch push** using Git webhooks — including feature branches, bugfixes, and protected branches.
-- All pushed code goes through testing, analysis, and security scanning regardless of the branch.
-- Only changes merged into protected branches (e.g., `main`, `release`) trigger **promotion workflows** to deploy into test and production environments.
-- The pipeline includes multiple stages to ensure **versioned, secure, and tested artifacts** are always produced and promoted safely.
+#### 🤽\ Early Stage: Versioning
+- Semantic version is calculated automatically (e.g., `1.4.7 → 1.4.8`) based on Git metadata
+- This version is applied to all artifacts:
+  - Docker images
+  - Helm charts
+  - Swagger files
 
-#### 🧭 Early Stage: Versioning
-- ✅ **Semantic Version Calculation**:
-  - The pipeline starts by calculating the next semantic version (e.g., `1.4.7 → 1.4.8`) based on commit history, branch name, or Git tags.
-  - This version is consistently applied to all build artifacts, e.g.:
-    - Docker images
-    - Helm charts
-    - Swagger files
+#### 🛠️ Build Stage
+- Code is compiled or transpiled (TypeScript, Java, SCSS)
+- Environment configurations are injected (e.g., `.env.production`, Helm values)
+- Frontend/backend bundles are optimized (Webpack, Vite, esbuild)
+- Build outputs are validated and prepared for packaging
 
-#### 🏗️ Build Stage
-- ✅ **Prepare Code and Artifacts for Production**:
-  - Compile or transpile code if needed (e.g., TypeScript, Java, SCSS, etc.)
-  - Inject environment-specific configurations (e.g., `.env.production`, Helm values, or ConfigMaps)
-  - Bundle, optimize, or minify frontend and backend assets (e.g., using Webpack, Vite, esbuild, or other tools)
-  - Validate that build outputs (e.g., JS bundles, server packages, compiled binaries) are complete and ready for testing and packaging
-  - Store build outputs in the workspace or artifact directory for the next pipeline stages
+#### 📆 Helm Chart Packaging
+- Rendered using environment-specific values
+- Linted and optionally tested (e.g., **helm unittest**, **chart-testing**)
+- Packaged `.tgz` files are stored for later use
 
-#### 📦 Helm Chart Packaging
-- ✅ **Helm Chart Creation**:
-  - Helm charts are rendered using environment-specific values
-  - Charts are versioned using the calculated semantic version
-  - Linting is applied to validate Helm templates
-  - Charts are optionally tested using tools like **helm unittest** or **chart-testing**
-  - Packaged `.tgz` files are stored for deployment
+#### 🚣 Docker Image Build & Push
+- Production-grade base images are used
+- Multi-arch support enabled (`linux/amd64`, `linux/arm64`)
+- Images tagged with the calculated semantic version
+- Image scanned for vulnerabilities (Twistlock)
+- Clean images pushed to **JFrog Artifactory**
+
+#### 🔍 Quality & Security Checks
+- Unit Tests: **Jest**
+- Component Tests: **Playwright**, **SuperTest**
+- E2E Tests: **Playwright**
+- Static Code Analysis: **SonarQube**
+- Dependency Scanning: **Black Duck**
+- Image Scanning: **Twistlock**
+
+#### 💡 Deployment Testing
+- Smoke tests are performed post-deployment to a test namespace
+- Verifies service readiness, environment config, and availability
+
+#### 📅 Artifact Promotion
+- Artifacts are versioned, signed, and stored in **JFrog Artifactory**
+- Promotion from `dev` → `test` → `prod` only occurs if all checks pass
 
 ---
 
-#### 🐳 Docker Image Build & Push
-- ✅ **Container Image Creation**:
-  - Docker images are built using production-ready base images
-  - Multi-architecture support (e.g., `linux/amd64`, `linux/arm64`) is enabled
-  - Image tags include the calculated semantic version
-  - Image is scanned for vulnerabilities (Twistlock)
-  - Clean images are pushed to **JFrog Artifactory** (or Docker Hub, ECR, etc.)
+### 🔹 Release
 
-### 4. Twistlock – Image Security Scan
-- The Docker image is scanned for known vulnerabilities.
-- Only clean images proceed to deployment.
+#### 🚀 Continuous Delivery with GitOps (e.g., ArgoCD)
+- Artifacts (Docker images, Helm charts) published to artifact repo
+- Git commits update Helm values/K8s manifests
+- **ArgoCD** syncs Git state to cluster
+- Staging is deployed automatically
+- Production requires manual approval or change control
+- Rollbacks = Git revert + ArgoCD sync
 
+---
 
-#### 🧪 Quality & Security Checks
-- ✅ **Unit Tests**:
-  - Run using **Jest** to test individual functions
-- ✅ **Component Tests**:
-  - Check interaction between components (e.g., API + DB, UI + Service) using tools like **SuperTest** or **Playwright**
-- ✅ **End-to-End (E2E) Tests**:
-  - Validate real-world flows with **Playwright**
-- ✅ **Static Code Analysis**:
-  - Performed by **SonarQube**
-- ✅ **Dependency Scanning**:
-  - Handled by **Black Duck** to identify vulnerable libraries
+### 🔹 Maintain
 
+#### 🔎 Monitoring & Incident Response
+- **Azure Monitor**, **Prometheus**, **Fluent Bit** collect telemetry
+- Alerts sent on failures, vulnerabilities, unusual patterns
+- Runtime issues (e.g., Twistlock alerts) trigger incident workflows
+- All pipeline actions (commit, build, deploy) are logged with metadata
 
-#### 🧪 Deployment Testing
-- ✅ **Deployment Test / Smoke Test**:
-  - Deployed into a test namespace/environment to validate deployment success, readiness, and connectivity
+---
 
-#### 📦 Artifact Management & Promotion
-- ✅ **Artifact Storage**:
-  - Artifacts are pushed to **JFrog Artifactory**, versioned and signed
-- ✅ **Promotion Logic**:
-  - Artifacts are promoted from **dev → test → prod** environments
-  - Only artifacts that pass **all tests, scans, and deployment validation** move forward
+## 🏁 Summary
 
-## 🔄 Continuous Delivery with GitOps (e.g., ArgoCD)
+This Secure Development Lifecycle ensures Contoso delivers secure, high-quality, and traceable software. Each phase integrates automated testing, scanning, promotion, and deployment controls using modern CI/CD and GitOps practices.
 
-This pipeline follows a **Continuous Delivery (CD)** model, where every change that passes all CI stages is automatically prepared for deployment.
-
-- ✅ After successful builds, tests, and security scans:
-  - Artifacts (e.g., Docker images, Helm charts) are versioned and published to an artifact repository
-  - Deployment files (e.g., Helm values or Kubernetes manifests) are updated in Git
-
-- ✅ **GitOps tooling** (e.g., ArgoCD) automatically detects changes in the Git repository and syncs them to target environments:
-  - Deployment to staging or test environments is fully automated
-  - Deployment to production environments is gated by manual approval or change control workflows
-
-- ✅ Rollbacks can be safely performed by reverting the last Git commit — restoring the previous application state without manual configuration
-
-This approach ensures that all deployments are:
-- **Repeatable** (everything is in Git)
-- **Auditable** (Git history + CI logs)
-- **Safe** (manual approval before production)
-- **Fast** (fully automated up to the prod gate)
-
-
-## 🔍 Monitoring & Incident Response
-
-- ✅ **Runtime Monitoring**:
-  - Use tools like **Azure Monitor**, **Prometheus**, or **Fluent Bit** to collect application and infrastructure telemetry.
-- ✅ **Alerting & Notifications**:
-  - Alerts for deployment failures, security scan issues, or abnormal traffic patterns are sent to channels like Slack or Teams.
-- ✅ **Security Incident Detection**:
-  - Runtime threats or policy violations (e.g., from Twistlock) trigger automatic alerts for investigation.
-- ✅ **Audit & Traceability**:
-  - All actions in the CI/CD process (commits, builds, deployments) are logged with traceable metadata for compliance and rollback.
+The result is a repeatable, auditable, and safe pipeline that supports rapid innovation with confidence.
