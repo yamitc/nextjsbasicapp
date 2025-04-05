@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-app
+        {{- include "helm.selectorLabels" . | nindent 8 }}
+    spec:
+      volumes:
+        - name: {{ .Values.deployment.volume.name }}
+          emptyDir: {}
+
+      initContainers:
+        - name: copy-code
+          image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag }}"
+          command: ["/bin/sh", "-c"]
+          args:
+            - cp -r /app/* /work && cp -r /app/.next /work/.next;
+          volumeMounts:
+            - name: {{ .Values.deployment.volume.name }}
+              mountPath: /work
+
+      containers:
+        - name: app-runtime
+          image: node:22-alpine
+          workingDir: /app
+          command: ["npm", "run", "start"]
+          volumeMounts:
+            - name: {{ .Values.deployment.volume.name }}
+              mountPath: /app
+          ports:
+            - containerPort: {{ .Values.deployment.runtimeContainer.port }}

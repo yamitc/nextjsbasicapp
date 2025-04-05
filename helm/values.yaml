@@ -1,0 +1,51 @@
+deployment:
+  replicaCount: 1
+  image:
+    repository: nextjsbasicapp.azurecr.io/nextjsbasicapp-image
+    tag: @version@
+  initContainer:
+    name: copy-code
+    command: ["/bin/sh", "-c"]
+    args: ["cp -r /app/* /work && cp -r /app/.next /work/.next"]
+    volumeMountPath: /work
+  runtimeContainer:
+    name: app-runtime
+    image: node:22-alpine
+    workingDir: /app
+    command: ["npm", "run", "start"]
+    port: 3000
+  volume:
+    name: work-volume
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - nextjsbasicapp.51.8.33.223.nip.io
+      secretName: nextjsbasicapp-selfsigned-tls
+
+
+
