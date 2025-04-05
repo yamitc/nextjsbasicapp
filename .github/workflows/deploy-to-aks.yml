@@ -100,16 +100,16 @@ jobs:
       - name: Package Helm chart
         run: helm package helm --destination packaged
 
-      - name: Enable Helm OCI and Push Chart to ACR
-        env:
-          HELM_EXPERIMENTAL_OCI: "1"
+      - name: Package Helm chart
+        run: helm package helm --destination packaged
+
+      - name: Push Helm chart to ACR via OCI
         run: |
           helm registry login nextjsbasicapp.azurecr.io \
             --username ${{ secrets.ACR_USERNAME }} \
             --password ${{ secrets.ACR_PASSWORD }}
 
-          helm chart save packaged/helm-${{ steps.version.outputs.tag }}.tgz oci://nextjsbasicapp.azurecr.io/helm
-          helm chart push oci://nextjsbasicapp.azurecr.io/helm/helm:${{ steps.version.outputs.tag }}
+          helm push packaged/helm-${{ steps.version.outputs.tag }}.tgz oci://nextjsbasicapp.azurecr.io/helm
 
       - name: Log in to Azure
         uses: azure/login@v1
