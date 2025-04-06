@@ -40,8 +40,8 @@ The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
 1. **Checkout Code**  
    Clones the repository to the GitHub Actions runner.
 
-2. **Tag Management**  
-   Fetches latest tags, increments patch version (`0.0.X`), and creates a new Git tag. This version is later injected into the Helm chart and Docker image.
+2. **Semantic Version Calculation**
+   Fetches the latest Git tags, increments the patch version (0.0.X), and creates a new Git tag. This version is then used for the build artifacts.
 
 3. **Node.js Setup & Install**  
    Installs Node.js v22 and project dependencies via `npm install`.
@@ -55,7 +55,7 @@ The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
    Executes the Next.js build process (`npm run build`).
 
 6. **Static Code Analysis**  
-   - **CodeQL Analysis**: Detects security flaws in JavaScript code with GitHub's built-in scanner.
+   - **CodeQL Analysis**: Detects security vulnerabilities in TypeScript code using GitHub’s built-in scanner.
 
 7. **Build & Push Docker Image to ACR**  
    - Uses `buildx` to build and tag the Docker image with `latest` and the version tag.
@@ -75,13 +75,13 @@ The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
 
 ---
 
-## 🌐 Exposing the Application with Ingress and SSL
+## 🌐 Exposing the Application with Ingress
 
 The application is exposed via an Ingress resource that provisions an external **public IP** with support for both HTTP and HTTPS.
 
 ### ✅ Ingress Overview
 
-After deployment, the Azure Load Balancer public IP acn be obtained with
+After deployment, the Azure Load Balancer public IP can be obtained with
 
 ```bash
 kubectl get ingress
