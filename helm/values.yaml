@@ -1,7 +1,7 @@
 deployment:
   replicaCount: 1
   image:
-    repository: nextjsbasicapp.azurecr.io/nextjsbasicapp-image
+    repository: @acr.name@.azurecr.io/nextjsbasicapp-image
     tag: @version@
   initContainer:
     name: copy-code

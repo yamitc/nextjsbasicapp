@@ -97,6 +97,7 @@ jobs:
           version=${{ steps.version.outputs.tag }}
           sed -i "s/@version@/${version}/g" helm/Chart.yaml
           sed -i "s/@version@/${version}/g" helm/values.yaml
+          sed -i "s/@acr.name@/${env.ACR_NAME}/g" helm/values.yaml
 
       - name: Package Helm chart
         run: helm package helm --destination packaged
