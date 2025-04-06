@@ -97,11 +97,13 @@ jobs:
             ${{ env.ACR_NAME }}.azurecr.io/nextjsbasicapp-image:${{ steps.version.outputs.tag }}
 
       - name: Inject version into Chart.yaml and values.yaml
+        env:
+          VERSION: ${{ steps.version.outputs.tag }}
+          ACR_NAME: ${{ env.ACR_NAME }}
         run: |
-          version=${{ steps.version.outputs.tag }}
-          sed -i "s/@version@/${version}/g" helm/Chart.yaml
-          sed -i "s/@version@/${version}/g" helm/values.yaml
-          sed -i "s/@acr.name@/${env.ACR_NAME}/g" helm/values.yaml
+          sed -i "s/@version@/${VERSION}/g" helm/Chart.yaml
+          sed -i "s/@version@/${VERSION}/g" helm/values.yaml
+          sed -i "s/@acr.name@/${ACR_NAME}/g" helm/values.yaml
 
       - name: Package Helm chart
         run: helm package helm --destination packaged
