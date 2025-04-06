@@ -80,39 +80,42 @@ The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
 
 ---
 
-## 🌐 Exposing the Application with Ingress
+## 🌐 Exposing the Application via Ingress
 
-The application is exposed via an Ingress resource that provisions an external **public IP** with support for both HTTP and HTTPS.
+The application is exposed through an **NGINX Ingress Controller**, deployed using Helm. It provisions a public IP to access the app externally.
 
-### ✅ Ingress Overview
-
-After deployment, the Azure Load Balancer public IP can be obtained with
-
-```bash
-kubectl get ingress
-```
-
-The output includes:
-- `ADDRESS`: `128.203.114.45` — Azure Load Balancer public IP
-- `PORTS`: Supports both HTTP (80) and HTTPS (443)
-
----
-
-### 🌍 Accessing the App
-
-The app is publicly available via the IP address:
+You can access the app at:
 
 ```
-https://128.203.114.45
+https://nextjsbasicapp.<PUBLIC-IP>.nip.io/
 ```
 
-Or, more conveniently, via a dynamic DNS domain using [nip.io](https://nip.io):
+> Example: `https://nextjsbasicapp.128.203.114.45.nip.io`  
+> Uses [`nip.io`](https://nip.io) for instant DNS — no manual configuration needed.
+
+### 🧩 Ingress Rule
+
+The Ingress rule includes:
+
+```yaml
+- path: /
+  pathType: Prefix
+```
+
+This ensures **all traffic under `/`** (e.g., `/`, `/blog`, `/api`) is routed to the backend service — ideal for web apps with client-side routing.
+
+### 🔐 TLS Support
+
+TLS is enabled with a **self-signed certificate** for encrypted HTTPS access in dev/test environments.
+
+### 📄 Helm-Templated Ingress
+
+The Ingress resource is dynamically generated via a Helm template located at:
 
 ```
-https://nextjsbasicapp.128.203.114.45.nip.io/
+templates/ingress.yaml
 ```
 
-This works automatically because `*.nip.io` resolves the domain to the IP embedded in it (`128.203.114.45`).  
-No DNS configuration is required — great for demos and test environments.
+This allows flexible customization of hostnames, TLS, annotations, and routing paths per environment.
 
 ---
