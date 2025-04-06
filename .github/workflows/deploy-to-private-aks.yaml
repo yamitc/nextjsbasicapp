@@ -1,4 +1,4 @@
-name: Deploy to AKS
+name: Deploy to private AKS
 
 on:
   push:
