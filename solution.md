@@ -6,16 +6,17 @@ This project demonstrates how to securely build, package, scan, and deploy a **N
 
 ## 📌 Prerequisites
 
-Before running the pipeline, ensure you have:
-- An Azure subscription
-- Azure CLI installed or access to Azure Cloud Shell
-- A GitHub repository with the necessary secrets configured
+Before running the pipeline, there should be:
+
+- An Azure subscription  
+- Azure CLI installed or access to [Azure Cloud Shell](https://shell.azure.com)  
+- A GitHub repository with the necessary secrets configured  
 
 To securely deploy to Azure from GitHub Actions, the following secrets are configured in the repository under  
 **Settings → Secrets and variables → Actions**:
 
 - **`AZURE_CREDENTIALS`**  
-  A JSON object containing credentials for a service principal with access to Azure subscription.  
+  A JSON object containing credentials for a service principal with access to the Azure subscription.  
   Used by the `azure/login@v1` action to authenticate to Azure.  
   It includes:
   - `clientId`
@@ -25,10 +26,14 @@ To securely deploy to Azure from GitHub Actions, the following secrets are confi
 
 - **`ACR_USERNAME`**  
   The username for Azure Container Registry (ACR).  
-  This is typically the name of ACR instance (e.g., `nextjsbasicapp`).
+  This is typically the name of the ACR instance (e.g., `nextjsbasicapp`).
 
 - **`ACR_PASSWORD`**  
   The password (secret) for the ACR.
+
+### 🗂️ Resource Group Creation
+
+A dedicated resource group named `my-private-aks-rg` was created in the `eastus` region to contain all the related infrastructure components required for this deployment. This resource group acts as a logical container for managing Azure resources such as the AKS cluster, networking components, and the container registry. Grouping related resources together simplifies management, access control, and cleanup.
 
 
 ## 🚀 CI/CD Pipeline Overview
@@ -40,8 +45,8 @@ The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
 1. **Checkout Code**  
    Clones the repository to the GitHub Actions runner.
 
-2. **Tag Management**  
-   Fetches latest tags, increments patch version (`0.0.X`), and creates a new Git tag. This version is later injected into the Helm chart and Docker image.
+2. **Semantic Version Calculation**
+   Fetches the latest Git tags, increments the patch version (0.0.X), and creates a new Git tag. This version is then used for the build artifacts.
 
 3. **Node.js Setup & Install**  
    Installs Node.js v22 and project dependencies via `npm install`.
@@ -55,7 +60,7 @@ The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
    Executes the Next.js build process (`npm run build`).
 
 6. **Static Code Analysis**  
-   - **CodeQL Analysis**: Detects security flaws in JavaScript code with GitHub's built-in scanner.
+   - **CodeQL Analysis**: Detects security vulnerabilities in TypeScript code using GitHub’s built-in scanner.
 
 7. **Build & Push Docker Image to ACR**  
    - Uses `buildx` to build and tag the Docker image with `latest` and the version tag.
@@ -75,13 +80,13 @@ The pipeline (`Deploy to AKS`) is triggered on each push to the `main` branch or
 
 ---
 
-## 🌐 Exposing the Application with Ingress and SSL
+## 🌐 Exposing the Application with Ingress
 
 The application is exposed via an Ingress resource that provisions an external **public IP** with support for both HTTP and HTTPS.
 
 ### ✅ Ingress Overview
 
-After deployment, the Azure Load Balancer public IP acn be obtained with
+After deployment, the Azure Load Balancer public IP can be obtained with
 
 ```bash
 kubectl get ingress
