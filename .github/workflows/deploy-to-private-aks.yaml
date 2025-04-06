@@ -1,9 +1,9 @@
-name: Deploy to AKS
+name: Deploy to private AKS
 
 on:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   workflow_dispatch: # 👈 Enable manual trigger from GitHub UI
 
 concurrency:
@@ -16,7 +16,11 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    env:
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
+      RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP }}
 
     steps:
       - name: Checkout code
@@ -78,9 +82,9 @@ jobs:
       - name: Log in to Azure Container Registry (ACR)
         uses: docker/login-action@v2
         with:
-          registry: nextjsbasicapp.azurecr.io
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          registry: ${{ env.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.P_ACR_USERNAME }}
+          password: ${{ secrets.P_ACR_PASSWORD }}
 
       - name: Build and push image to ACR
         uses: docker/build-push-action@v5
@@ -89,8 +93,8 @@ jobs:
           file: docker/Dockerfile
           push: true
           tags: |
-            nextjsbasicapp.azurecr.io/nextjsbasicapp-image:latest
-            nextjsbasicapp.azurecr.io/nextjsbasicapp-image:${{ steps.version.outputs.tag }}
+            ${{ env.ACR_NAME }}.azurecr.io/nextjsbasicapp-image:latest
+            ${{ env.ACR_NAME }}.azurecr.io/nextjsbasicapp-image:${{ steps.version.outputs.tag }}
 
       - name: Inject version into Chart.yaml and values.yaml
         run: |
@@ -101,16 +105,13 @@ jobs:
       - name: Package Helm chart
         run: helm package helm --destination packaged
 
-      - name: Package Helm chart
-        run: helm package helm --destination packaged
-
       - name: Push Helm chart to ACR via OCI
         run: |
-          helm registry login nextjsbasicapp.azurecr.io \
-            --username ${{ secrets.ACR_USERNAME }} \
-            --password ${{ secrets.ACR_PASSWORD }}
+          helm registry login ${{ env.ACR_NAME }}.azurecr.io \
+            --username ${{ secrets.P_ACR_USERNAME }} \
+            --password ${{ secrets.P_ACR_PASSWORD }}
 
-          helm push packaged/helm-${{ steps.version.outputs.tag }}.tgz oci://nextjsbasicapp.azurecr.io/helm
+          helm push packaged/helm-${{ steps.version.outputs.tag }}.tgz oci://${{ env.ACR_NAME }}.azurecr.io/helm
 
       - name: Log in to Azure
         uses: azure/login@v1
@@ -118,7 +119,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Get AKS credentials
-        run: az aks get-credentials --resource-group my-aks-rg --name myakscluster --overwrite-existing
+        run: az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --overwrite-existing
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -132,7 +133,7 @@ jobs:
         run: |
           helm upgrade --install nextjsbasic ./helm \
             --namespace default \
-            --atomic --force
+            --timeout 10m0s
 
       - name: Wait for pod to be ready
         run: |
