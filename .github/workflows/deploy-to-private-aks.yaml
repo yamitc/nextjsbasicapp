@@ -1,9 +1,9 @@
 name: Deploy to AKS
 
 on:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   workflow_dispatch: # 👈 Enable manual trigger from GitHub UI
 
 concurrency:
