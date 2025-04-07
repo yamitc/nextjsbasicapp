@@ -17,6 +17,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      ACR_NAME: ${{ vars.ACR_NAME }}
 
     steps:
       - name: Checkout code
@@ -134,8 +136,7 @@ jobs:
       - name: Deploy chart to cluster
         run: |
           helm upgrade --install nextjsbasic ./helm \
-            --namespace default \
-            --atomic --force
+            --namespace default
 
       - name: Wait for pod to be ready
         run: |
