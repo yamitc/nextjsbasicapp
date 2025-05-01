@@ -93,11 +93,11 @@ On the AKS with external access, it provisions a public IP to access the app ext
 You can access the app at:
 
 ```
-https://nextjsbasicapp.128.203.114.45.nip.io
+https://nextjsbasicapp.4.156.50.243.nip.io
 ```
 
 > This URL uses [`nip.io`](https://nip.io), a free wildcard DNS service that automatically resolves subdomains based on embedded IP addresses.  
-> In this case, `nextjsbasicapp.128.203.114.45.nip.io` points directly to `128.203.114.45` — no DNS configuration or custom domain setup is needed.  
+> In this case, `nextjsbasicapp.4.156.50.243.nip.io` points directly to `4.156.50.243` — no DNS configuration or custom domain setup is needed.  
 > It’s a convenient way to test applications deployed with dynamic or temporary IPs, especially in dev or demo environments.
 
 In the private AKS deployment pipeline, I used an internal NGINX Ingress Controller, which provisions an internal load balancer. This means the application is only accessible within the same virtual network, such as from a jumpbox VM or other internal services connected to the same VNet.
